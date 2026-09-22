@@ -13,10 +13,8 @@ feita, e traduz os erros que se parecem mas significam coisas diferentes.
 
 ## Instalação
 
-Direto da Peti9:
-
 ```
-/plugin marketplace add https://skill.peti9.com/.claude-plugin/marketplace.json
+/plugin marketplace add peti9-tech/peti9-openapi
 /plugin install peti9-openapi@peti9
 ```
 
@@ -27,11 +25,12 @@ Ou pelo diretório oficial de plugins do Claude, onde a skill também está publ
 /plugin install peti9-openapi@claude-community
 ```
 
-Os dois caminhos instalam a mesma skill.
+Há ainda o endereço direto da Peti9,
+`https://skill.peti9.com/.claude-plugin/marketplace.json`, que funciona apenas no
+Claude Code pelo terminal — a interface web só aceita repositórios Git.
 
-O passo a passo completo, em linguagem simples, está em
-**[skill.peti9.com](https://skill.peti9.com)** — incluindo como obter as
-credenciais e como configurá-las no macOS, Linux ou Windows.
+Todos instalam a mesma skill. O passo a passo completo, incluindo como obter as
+credenciais, está em **[skill.peti9.com](https://skill.peti9.com)**.
 
 ## O que ela faz
 

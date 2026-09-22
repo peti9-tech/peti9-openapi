@@ -13,10 +13,21 @@ feita, e traduz os erros que se parecem mas significam coisas diferentes.
 
 ## Instalação
 
+Direto da Peti9:
+
 ```
 /plugin marketplace add https://skill.peti9.com/.claude-plugin/marketplace.json
 /plugin install peti9-openapi@peti9
 ```
+
+Ou pelo diretório oficial de plugins do Claude, onde a skill também está publicada:
+
+```
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install peti9-openapi@claude-community
+```
+
+Os dois caminhos instalam a mesma skill.
 
 O passo a passo completo, em linguagem simples, está em
 **[skill.peti9.com](https://skill.peti9.com)** — incluindo como obter as

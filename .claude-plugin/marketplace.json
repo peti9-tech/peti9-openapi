@@ -1,0 +1,12 @@
+{
+  "name": "peti9",
+  "owner": { "name": "Peti9" },
+  "description": "Skills oficiais da Peti9 para parceiros de integracao.",
+  "plugins": [
+    {
+      "name": "peti9-openapi",
+      "source": "./",
+      "description": "Skill oficial para integrar com as Open APIs da Peti9."
+    }
+  ]
+}

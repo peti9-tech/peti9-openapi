@@ -8,7 +8,8 @@ description: >
   "chamar a open api da peti9", "gerar o token da openapi", "pegar o JWT da api
   pública", "consultar item/estoque/preço/tutor/pedido/prontuário pela API pública",
   "integração de laboratório, plano de saúde, CRM ou MeuPet",
-  "qual endpoint da open api faz Y", ou quando
+  "qual endpoint da open api faz Y", "configure as credenciais da skill
+  peti9-openapi", "guardar minha api key / usuário / senha da Peti9", ou quando
   reclamar de 401/403/500 na openapi, "Missing Authentication Token",
   "HEADER CUSTOMER IS A MANDATORY INFO", "o token não funciona na api pública".
   Vale apenas para as chamadas que passam por openapi.peti9.com.
@@ -81,7 +82,12 @@ sozinho. Um usuário `integracao` no tenant `clinicaexemplo` autentica como
 Se você não souber o tenant, ele está no token de qualquer sessão da plataforma
 (claim `tenant_id`), ou basta perguntar ao cliente.
 
-### 4. Exportar as variáveis
+### 4. Guardar as credenciais — quem faz é você, Claude
+
+As três variáveis vão no bloco **`env` do `~/.claude/settings.json`**. O Claude Code
+lê esse arquivo sozinho e injeta as variáveis em toda sessão e em todo comando que
+executa — independente do sistema operacional, do shell, e de o Claude ter sido
+aberto pelo terminal ou pelo aplicativo de desktop.
 
 | Variável | Origem |
 |---|---|
@@ -89,38 +95,96 @@ Se você não souber o tenant, ele está no token de qualquer sessão da platafo
 | `PETI9_OPENAPI_USERNAME` | `<login>@<tenant>` do usuário criado (passos 2 e 3) |
 | `PETI9_OPENAPI_PASSWORD` | a senha definida no passo 2 |
 
-Guarde num arquivo fora de qualquer repositório, só seu:
+**Não use `~/.bashrc`, `~/.zshrc` nem arquivo `.env` carregado pelo shell.** Esse
+caminho parece funcionar e falha em silêncio: o aplicativo de desktop, aberto pela
+interface gráfica, nunca lê os arquivos de inicialização do shell; e no Ubuntu o
+`~/.bashrc` sai logo no começo quando o shell não é interativo, então uma linha
+acrescentada no fim nunca roda. O usuário executa tudo certo, reinicia, e o Claude
+continua sem as variáveis.
+
+#### Quando o usuário pedir para configurar
+
+1. **Peça os três valores numa única mensagem**, dizendo de onde vem cada um e
+   lembrando que o usuário vai no formato `login@tenant`. Avise uma vez, sem
+   dramatizar, que o que ele digitar fica no histórico desta conversa — e que, se
+   preferir não digitar a senha aqui, ele pode editar o arquivo à mão (abaixo).
+2. **Faça cópia de segurança** do `~/.claude/settings.json`, se ele existir.
+3. **Mescle, nunca sobrescreva.** O arquivo quase sempre já tem outras
+   configurações do usuário. Leia o JSON, acrescente as três chaves dentro de
+   `env` (criando `env` se não existir) e grave de volta. Se o arquivo não existir,
+   crie com apenas o bloco `env`.
+4. **Valide o JSON depois de gravar.** Um `settings.json` inválido faz o Claude Code
+   **ignorar o arquivo inteiro** — o usuário perde todas as configurações dele, em
+   silêncio. Se a validação falhar, restaure a cópia de segurança.
+5. **Restrinja a permissão** do arquivo ao próprio usuário (`chmod 600` no macOS e
+   no Linux), porque agora ele guarda uma senha.
+6. **Nunca repita os valores** na resposta — confirme só pelos nomes das variáveis.
+7. **Peça para abrir uma sessão nova** do Claude. As variáveis do `settings.json`
+   entram em vigor na próxima sessão, não nesta.
+
+Em macOS e Linux, com `python3` disponível, isto faz os passos 2 a 5 de uma vez:
 
 ```bash
-cat > ~/.peti9-openapi.env <<'EOF'
-export PETI9_OPENAPI_API_KEY='...'
-export PETI9_OPENAPI_USERNAME='...'
-export PETI9_OPENAPI_PASSWORD='...'
-EOF
-chmod 600 ~/.peti9-openapi.env
+PK='<api-key>' PU='<login@tenant>' PS='<senha>' python3 - <<'PY'
+import json, os, pathlib, shutil
+arq = pathlib.Path.home() / ".claude" / "settings.json"
+arq.parent.mkdir(parents=True, exist_ok=True)
+dados = {}
+if arq.exists():
+    shutil.copy2(arq, arq.with_suffix(".json.bak"))
+    dados = json.loads(arq.read_text(encoding="utf-8") or "{}")
+dados.setdefault("env", {}).update({
+    "PETI9_OPENAPI_API_KEY": os.environ["PK"],
+    "PETI9_OPENAPI_USERNAME": os.environ["PU"],
+    "PETI9_OPENAPI_PASSWORD": os.environ["PS"],
+})
+arq.write_text(json.dumps(dados, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+json.loads(arq.read_text(encoding="utf-8"))   # valida: se falhar, restaure o .bak
+os.chmod(arq, 0o600)
+print("credenciais gravadas em", arq)
+PY
 ```
 
-E carregue no shell, acrescentando ao `~/.zshrc` (ou `~/.bashrc`):
+No Windows, ou sem `python3`, use a ferramenta de JSON do sistema (no PowerShell,
+`ConvertFrom-Json` / `ConvertTo-Json`) e siga as mesmas regras: cópia de segurança,
+mesclar, validar. O arquivo fica em `%USERPROFILE%\.claude\settings.json`.
 
-```bash
-[ -f ~/.peti9-openapi.env ] && . ~/.peti9-openapi.env
+Se existir um `~/.peti9-openapi.env` de uma configuração antiga, ele não é mais
+necessário. O valor do `settings.json` prevalece sobre o que estiver exportado no
+shell, então não há conflito — mas vale oferecer a remoção, para a senha não ficar
+guardada em dois lugares.
+
+#### Quem prefere editar à mão
+
+Abrir `~/.claude/settings.json` e acrescentar, sem apagar o que já existe:
+
+```json
+{
+  "env": {
+    "PETI9_OPENAPI_API_KEY": "sua-chave-do-portal",
+    "PETI9_OPENAPI_USERNAME": "login@tenant",
+    "PETI9_OPENAPI_PASSWORD": "sua-senha"
+  }
+}
 ```
 
-Abra um terminal novo e confirme sem imprimir nada:
+Se o arquivo já tiver um bloco `env`, as três linhas entram dentro dele.
 
-```bash
-for v in PETI9_OPENAPI_API_KEY PETI9_OPENAPI_USERNAME PETI9_OPENAPI_PASSWORD; do
-  eval "val=\$$v"; [ -n "$val" ] && echo "$v: ok" || echo "$v: FALTANDO"
-done
-```
+#### Regras que não se negociam
 
-Três regras que não se negociam: **não** commite o arquivo, **não** ponha os
-valores num `.env` de projeto que vá para o git, e **não** cole a senha no chat.
+**Não** grave as credenciais em nenhum arquivo dentro de repositório — nem em
+`.claude/settings.json` de projeto, que costuma ir para o git. O lugar é só o
+`settings.json` do **usuário**, na pasta pessoal dele.
 
 ## Se alguma variável faltar
 
-Pare e peça ao usuário que configure, apontando o passo acima que resolve. Nunca
-invente valor, nunca peça para colar no chat.
+Não pare só para avisar: **ofereça configurar agora**, seguindo o procedimento
+acima. Se o usuário aceitar, peça os valores; se preferir fazer sozinho, aponte a
+edição manual. Nunca invente valor nem use placeholder com cara de credencial.
+
+Se as variáveis faltarem **logo depois** de uma configuração, a causa quase sempre
+é a sessão: o `settings.json` só vale em sessão nova. Peça para abrir outra antes
+de investigar qualquer coisa.
 
 ## Passo 1 — gerar o token
 

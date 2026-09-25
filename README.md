@@ -43,8 +43,15 @@ Depois de instalada, você pergunta em português e o assistente busca a respost
 
 ## Credenciais
 
-A skill usa três variáveis de ambiente, definidas pelo próprio usuário na
-máquina dele:
+A skill usa três variáveis. Depois de instalar, basta pedir ao próprio Claude:
+
+```
+Configure as credenciais da skill peti9-openapi
+```
+
+Ele pede os três valores e os guarda no bloco `env` do `~/.claude/settings.json`,
+que o Claude Code lê em toda sessão — funciona igual no macOS, no Linux e no
+Windows, e também quando o Claude é aberto pelo aplicativo de desktop.
 
 | Variável | Origem |
 |---|---|

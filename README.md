@@ -11,6 +11,12 @@ plataforma: ela cuida do fluxo do token JWT, preenche os cabeçalhos de empresa
 que toda chamada exige, escolhe o grupo de API certo para a pergunta que foi
 feita, e traduz os erros que se parecem mas significam coisas diferentes.
 
+## Onde funciona
+
+No **Claude Code** — no terminal, na aba Code do aplicativo Claude ou no VS Code.
+A skill precisa executar comandos no seu computador e ler as credenciais dele, então
+**não funciona na conversa comum do Claude** (claude.ai ou aba Chat) nem no Cowork.
+
 ## Instalação
 
 ```
@@ -56,12 +62,22 @@ Windows, e também quando o Claude é aberto pelo aplicativo de desktop.
 | Variável | Origem |
 |---|---|
 | `PETI9_OPENAPI_API_KEY` | Developer Portal, em *My Dashboard* |
-| `PETI9_OPENAPI_USERNAME` | usuário de integração criado pelo cliente, no formato `login@tenant` |
-| `PETI9_OPENAPI_PASSWORD` | senha desse usuário |
+| `PETI9_OPENAPI_USERNAME` | a **clínica** usa o próprio login da Peti9; o **parceiro** usa o usuário que a clínica criou para ele — sempre no formato `login@tenant` |
+| `PETI9_OPENAPI_PASSWORD` | a senha desse login |
 
 Nada é enviado para a Peti9 pela skill: as chamadas vão direto do computador do
-usuário para `openapi.peti9.com`. As credenciais nunca são impressas, e toda
-operação de escrita em produção exige confirmação explícita.
+usuário para `openapi.peti9.com`. As credenciais nunca são impressas.
+
+**Consultas são feitas direto; qualquer alteração exige confirmação explícita.** A
+skill só responde com dados que a API devolveu, e pergunta em qual loja operar
+quando o usuário tem mais de uma.
+
+**Por ser uma IA, o Claude pode cometer erros.** A responsabilidade por conferir as
+informações e confirmar as alterações é sempre do usuário.
+
+**Dando acesso a um parceiro**, a clínica cria um usuário próprio para ele e é
+responsável por esse usuário: criação, permissões e revogação quando a parceria
+acabar.
 
 Por exigência da LGPD, a Peti9 não fornece credenciais de integração — elas são
 criadas pelo cliente, que é o controlador dos dados.

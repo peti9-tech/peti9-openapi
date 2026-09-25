@@ -9,7 +9,10 @@ description: >
   pública", "consultar item/estoque/preço/tutor/pedido/prontuário pela API pública",
   "integração de laboratório, plano de saúde, CRM ou MeuPet",
   "qual endpoint da open api faz Y", "configure as credenciais da skill
-  peti9-openapi", "guardar minha api key / usuário / senha da Peti9", ou quando
+  peti9-openapi", "guardar minha api key / usuário / senha da Peti9", "como
+  consigo a chave da api", "posso usar meu login da Peti9", "criar usuário
+  para um parceiro", "revogar o acesso do parceiro", "em qual loja/unidade",
+  "não tem api para isso", "pedir uma api nova", ou quando
   reclamar de 401/403/500 na openapi, "Missing Authentication Token",
   "HEADER CUSTOMER IS A MANDATORY INFO", "o token não funciona na api pública".
   Vale apenas para as chamadas que passam por openapi.peti9.com.
@@ -31,52 +34,163 @@ vários grupos sob caminhos diferentes.
 > `openapi.peti9.com` **é produção**. Não há sandbox: o que volta é dado de cliente
 > real. Ver "Escrita em produção".
 
+## Onde esta skill funciona
+
+Esta skill funciona no **Claude Code** — no terminal, na aba Code do aplicativo
+Claude ou no VS Code. Ela depende de duas coisas que só existem ali: executar
+comandos na máquina do usuário e ler as credenciais do `~/.claude/settings.json`.
+
+Se você perceber que está numa conversa comum do Claude (claude.ai, aba Chat) ou
+no Cowork — sem terminal para executar —, diga isso logo, em linguagem simples:
+aqui você consegue explicar como a API funciona, mas não consultar os dados dele;
+para isso, ele precisa usar o Claude Code. Não tente contornar.
+
+## Como falar com o usuário
+
+Quem usa esta skill é, na maioria das vezes, alguém da clínica ou do pet shop —
+não um desenvolvedor. Estas regras valem para a skill inteira.
+
+- **Linguagem simples por padrão.** Diga "produtos e estoque", não "grupo Items";
+  "a sua loja do Centro", não "empresa_id 3". Nome técnico — cabeçalho, endpoint,
+  código HTTP, caminho da API — só quando o usuário pedir, ou quando ele mesmo
+  estiver escrevendo código. Colar uma mensagem de erro não faz de ninguém
+  desenvolvedor.
+- **Responda primeiro o que foi perguntado.** Não despeje o processo inteiro de
+  configuração em quem fez uma pergunta pontual; ofereça o próximo passo em uma
+  frase.
+- **Nunca entregue um comando para o usuário rodar.** Checar, testar e configurar
+  é trabalho seu. Se você não conseguir executar, diga isso em uma frase e siga
+  com a orientação — sem transferir a tarefa técnica.
+- **Pergunte sempre que a decisão for do usuário.** Qual loja, qual período, qual
+  tutor quando houver dois parecidos, se é para gravar ou só consultar. Nunca
+  escolha por ele o que muda o resultado. E não pergunte o que você mesmo consegue
+  descobrir — o código da loja, o tenant, o usuário do token.
+- **Uma pergunta por vez, com opções.** "Em qual loja: Centro, Norte ou Sul?" é
+  melhor que "qual é o empresa_id?".
+
+## Só o que a API devolveu
+
+**Nunca invente dado.** Toda informação que você der sobre a clínica — nome de
+tutor, pet, preço, estoque, horário, número de atendimento, valor — tem que ter
+vindo de uma resposta da API nesta conversa.
+
+- **Se a API não devolveu, você não sabe.** Diga isso. Não complete com um valor
+  "provável", não estime, não arredonde para parecer completo.
+- **Resposta vazia é resposta.** Uma lista vazia quer dizer "nada encontrado" —
+  não "deve haver algo". Diga que não encontrou e ofereça buscar de outro jeito.
+- **Não junte pedaços para fabricar um número** que a API não dá — um total que
+  ela não calcula, uma média de itens que você não consultou todos.
+- **Se não conseguir consultar**, não responda de memória nem com um exemplo.
+- **Não invente identificadores** — código de atendimento, id de item, id de
+  tutor. Busque na API ou pergunte.
+- **Se alguma parte for dedução sua**, e não dado da API, diga que é dedução.
+
 ## Configuração inicial (uma vez)
 
-A skill precisa de três variáveis de ambiente. Elas vêm de **duas origens
-diferentes**, e é isso que confunde: a API Key é sua, do parceiro; o usuário e a
-senha são do **cliente**, criados por ele na plataforma dele.
+A skill precisa de três dados: uma **chave de acesso** (API Key), um **usuário** e
+uma **senha** da plataforma Peti9.
 
-### 1. Conta no Developer Portal → a API Key
+**Primeiro, descubra com quem você está falando** — sempre que o assunto for
+configuração, credenciais ou acesso. Se não estiver claro, pergunte:
 
-1. Acesse `https://devportal.peti9.com` e clique em **Register**. O acesso é
-   restrito a parceiros certificados.
+> Você é a clínica ou pet shop que usa a Peti9, ou um parceiro de integração que
+> está conectando o sistema de vocês à Peti9 de um cliente?
+
+Os dois casos são igualmente comuns. Muda de onde vêm o usuário e a senha; a
+chave de acesso vem do mesmo lugar para os dois.
+
+### 1. A chave de acesso → no Developer Portal
+
+Vale para a clínica e para o parceiro. Os botões do portal estão em **inglês** —
+use os nomes exatos, para o usuário reconhecer o que vê na tela.
+
+1. Acesse `https://devportal.peti9.com` e clique em **Register**.
 2. Confirme o e-mail e faça **Sign In**.
-3. Abra **My Dashboard** no menu do topo. O bloco **API Key** mostra a chave em
-   texto puro — é o valor de `PETI9_OPENAPI_API_KEY`.
-4. A chave nasce **sem assinatura em nenhum grupo**. Para liberar, fale com o time
-   comercial — e-mail `comercial@peti9.com` ou WhatsApp `(48) 98843-5447` — com o
-   nome da empresa, o e-mail do cadastro e a descrição da integração. A liberação é por grupo, depois de NDA e contrato de parceria.
+3. Abra **My Dashboard** no menu do topo. O quadro **API Key** mostra a chave.
+4. **A chave nasce sem acesso a nada.** Quem libera é o time comercial da Peti9 —
+   e-mail `comercial@peti9.com` ou WhatsApp `(48) 98843-5447` —, a partir do nome
+   da empresa, do e-mail usado no cadastro do portal e de para que o acesso vai
+   ser usado. Para parceiros, a liberação passa também por NDA e contrato de
+   parceria.
+5. **Quando o acesso for aprovado, o comercial avisa por e-mail.** A partir desse
+   aviso a mesma chave já funciona nas áreas liberadas — não é preciso gerar outra.
+   A liberação não é imediata; oriente o usuário a esperar o e-mail em vez de
+   testar a toda hora.
 
 Enquanto a liberação não sai, toda chamada devolve `403 {"message":"Forbidden"}`.
 
-### 2. Usuário de integração → na plataforma do cliente
+### 2. O usuário e a senha → depende de quem é
 
-A Peti9 **não** cria essa credencial: por LGPD o cliente é o controlador do dado e
-o parceiro é operador. Quem executa o passo abaixo é o cliente, na plataforma
-dele, e depois repassa a você.
+#### A clínica usa o próprio login
+
+A clínica usa **o login dela na plataforma Peti9**, o mesmo com que entra no
+sistema todo dia. Não precisa criar nada. A skill enxerga o que esse login
+enxerga: as mesmas lojas e as mesmas permissões.
+
+Duas situações pedem atenção — mencione só se forem acontecer:
+
+- **Senha com símbolo.** A senha vai no endereço da autenticação, e `/`, `#`, `?`,
+  `%` e `&` quebram a chamada (`/` não tem conserto). Se a senha tiver algum
+  desses, a saída é trocá-la por uma só com letras e números, ou criar um usuário
+  próprio para a skill.
+- **Troca de senha.** Se a senha mudar na plataforma, a skill para de funcionar
+  até as credenciais serem atualizadas — basta pedir de novo "Configure as
+  credenciais da skill peti9-openapi".
+
+Se a clínica preferir não usar o login pessoal — para limitar as lojas que a skill
+enxerga, por exemplo —, pode criar um usuário só para isso, do jeito descrito mais
+abaixo. É opcional.
+
+#### A clínica vai dar acesso a um parceiro
+
+A clínica **nunca entrega o próprio login**. Ela cria um usuário novo, só para
+aquele parceiro, e **a responsabilidade por esse usuário é dela**. Ao orientar,
+diga isso com todas as letras — "a responsabilidade é sua" — e liste os três
+deveres; é o ponto que mais precisa ficar claro:
+
+- **Criar** o usuário e a senha, e entregar ao parceiro — de preferência o usuário
+  por um canal e a senha por outro.
+- **Controlar as permissões.** O Grupo Usuário define o que o parceiro acessa, e a
+  caixa Empresas define quais lojas. Marque só o que a parceria precisa.
+- **Revogar quando a parceria acabar**, desativando o usuário na plataforma. A
+  partir daí o parceiro não consegue gerar acesso novo. Um acesso gerado antes da
+  desativação pode continuar valendo por até 24 horas, que é a validade do token —
+  se o encerramento for delicado, desative com essa antecedência.
+
+A Peti9 não cria, não gerencia e não revoga esse usuário: por LGPD, a clínica é a
+controladora dos dados, e o parceiro é operador. O parceiro tira a **própria**
+chave de acesso no Developer Portal (passo 1) — a clínica não repassa chave.
+
+#### O parceiro usa o usuário que a clínica criou
+
+O parceiro recebe da clínica o usuário e a senha. Se o acesso passar a responder
+"usuário ou senha inválido", a primeira hipótese é a clínica ter trocado a senha ou
+desativado o usuário — isso se resolve com ela, não com a Peti9.
+
+#### Como a clínica cria um usuário novo
 
 Na plataforma Peti9, em **Configurações → Usuários → novo usuário**:
 
-- **Nome** — identifique como integração, ex. `Integração <parceiro>`, para
-  ninguém desativar achando que é gente.
+- **Nome** — identifique para que serve, ex. `Integração <parceiro>`, para ninguém
+  desativar achando que é gente.
 - **Usuário** — o login. Aceita **apenas letras e números**: sem espaço, acento,
   ponto ou `@`. A restrição é do sistema, não só da tela.
 - **Senha** e **Confirmar a senha** — mínimo 8 caracteres, com letras e números.
-- **Grupo Usuário** — define a que telas/rotas o usuário tem acesso.
+  Use só letras e números, pelo motivo do símbolo explicado acima.
+- **Grupo Usuário** — define a que telas e dados o usuário tem acesso.
 - **Ativo** — marcado.
-- **Empresas** — marque **todas as empresas** cujos dados a integração vai ler ou
-  escrever. É esse vínculo que decide quais valores de `empresa_id` funcionam
-  depois; sem ele a API responde vazio, sem erro.
+- **Empresas** — marque as lojas cujos dados ele vai ler ou gravar. Sem esse
+  vínculo, a API responde vazio, sem erro.
 
 Não existe "tipo integração" nem perfil especial de API: é um usuário comum da
-plataforma. Quem limita o alcance dele é o Grupo Usuário e as empresas marcadas.
+plataforma. Quem limita o alcance dele é o Grupo Usuário e as lojas marcadas.
 
 ### 3. O username da API não é o login
 
 Ao salvar, a plataforma propaga o usuário para o Keycloak como
 **`<login>@<tenant>`**. É esse valor composto que vai na variável — não o login
-sozinho. Um usuário `integracao` no tenant `clinicaexemplo` autentica como
+sozinho — vale para o login pessoal e para um usuário criado para parceiro. Um
+usuário `integracao` no tenant `clinicaexemplo` autentica como
 `integracao@clinicaexemplo`.
 
 Se você não souber o tenant, ele está no token de qualquer sessão da plataforma
@@ -103,6 +217,16 @@ acrescentada no fim nunca roda. O usuário executa tudo certo, reinicia, e o Cla
 continua sem as variáveis.
 
 #### Quando o usuário pedir para configurar
+
+**Antes de pedir qualquer dado, mostre o aviso de primeiro acesso**, uma vez, com
+estas palavras ou equivalentes:
+
+> Antes de começar: por ser uma inteligência artificial, eu posso cometer erros. A
+> responsabilidade por conferir as informações que eu trouxer e por confirmar
+> qualquer alteração nos seus dados é sempre sua. Eu nunca altero nada sem a sua
+> confirmação explícita.
+
+Depois do aviso:
 
 1. **Peça os três valores numa única mensagem**, dizendo de onde vem cada um e
    lembrando que o usuário vai no formato `login@tenant`. Avise uma vez, sem
@@ -228,50 +352,74 @@ a liberação acabou de sair — veja "Quando a resposta for 403 Forbidden".)
 
 ## Passo 2 — chamar um endpoint
 
-Quatro headers, e os dois de empresa são tão obrigatórios quanto o Bearer:
+Toda chamada leva o token e **quatro cabeçalhos de empresa**, que dizem em qual
+loja a operação acontece:
 
 ```bash
 curl -s -H "x-api-key: $PETI9_OPENAPI_API_KEY" \
      -H "Authorization: Bearer $TOKEN" \
-     -H "empresa_id: 1" \
-     -H "empresa_cadastro: 1" \
+     -H "empresa_id: $EMP_ID" \
+     -H "empresa_cadastro: $EMP_CADASTRO" \
+     -H "empresa_financeiro: $EMP_FINANCEIRO" \
+     -H "empresa_preco: $EMP_PRECO" \
      "https://openapi.peti9.com/items/item/paginar/lista?pagina=0&limit=2&orderBy=nome"
 ```
 
-- **`empresa_id`** — a empresa do contexto da chamada (a unidade que está operando).
-- **`empresa_cadastro`** — a empresa em que o dado está cadastrado. Costuma ser o
-  mesmo valor, mas em rede com matriz e filiais **não é**, e trocar um pelo outro
-  devolve lista vazia sem erro nenhum.
+### Escolher a loja
 
-**Descubra esses valores sozinho, não peça ao usuário.** Ele quase nunca sabe o
-número da empresa, e perguntar transforma uma pergunta simples num interrogatório
-técnico. O procedimento é sempre o mesmo:
+**A loja é decisão do usuário. Os números são trabalho seu.**
 
 1. Gere o token (passo 1) e leia o `user_id` do payload do JWT.
-2. Chame `GET /companies/empresa/{userId}/empresas-login`.
-3. Se vier **uma** empresa, use os valores dela e siga em frente, sem perguntar
-   nada. Apenas diga de qual unidade é o dado na resposta.
-4. Se vierem **várias**, aí sim pergunte — mas pergunte pelo **nome** da unidade,
-   nunca pelo número, e faça a tradução você mesmo.
-5. Se vier `[]`, explique que o usuário de integração não tem nenhuma unidade
-   vinculada e que isso se resolve em Configurações → Usuários, na caixa
-   "Empresas".
+2. Chame `GET /companies/empresa/{userId}/empresas-login`. Ela devolve as lojas que
+   esse login pode acessar, cada uma com os quatro valores prontos:
 
-**Não adivinhe esses dois valores: pergunte à API.** O `user_id` está no payload
-do JWT, e `GET /companies/empresa/{userId}/empresas-login` devolve as empresas
-vinculadas com os dois números já prontos:
+   ```json
+   [{"codigo":12,"nome":"Clinica Exemplo LTDA","nomeFantasia":"Clínica Exemplo Centro","empresaCadastro":12,"empresaFinanceiro":12,"empresaPreco":10}]
+   ```
 
-```json
-[{"codigo":12,"nome":"Clinica Exemplo LTDA","empresaCadastro":12,"empresaFinanceiro":12,"empresaPreco":12}]
-```
+3. Decida conforme o que voltou:
+   - **Uma loja:** use-a sem perguntar — não há decisão a tomar — e diga na
+     resposta de qual loja é o dado. Numa gravação, cite a loja na confirmação.
+   - **Várias lojas, e o usuário não disse qual:** pergunte, listando pelo nome.
+     Use o `nomeFantasia`, que é como a equipe chama a loja; se vier vazio, o
+     `nome`. Numa **consulta**, ofereça também a opção de ver **todas** — e aí
+     consulte uma por uma e mostre o resultado separado por loja. Numa
+     **gravação**, é sempre **uma loja só**: nunca grave em várias de uma vez.
+     Faça a pergunta **neutra**: não sugira uma resposta ("eu assumiria todas"),
+     porque a escolha é do usuário, não sua. Exemplo — o usuário diz "tenho três
+     lojas, quanto tem de ração no estoque?": **não** consulte as três nem uma delas
+     por conta própria; pergunte "Em qual loja: Centro, Norte ou Sul — ou prefere
+     ver as três?" e espere a resposta. Mencionar as lojas não é escolher entre
+     elas.
+   - **Várias lojas, e o usuário já disse qual:** use essa. Se o nome que ele usou
+     não bater claramente com nenhuma, pergunte em vez de escolher a mais parecida.
+   - **Nenhuma (`[]`):** o login não tem loja vinculada. Resolve-se na plataforma,
+     em Configurações → Usuários, na caixa Empresas — pela própria clínica. Se
+     quem está falando é o parceiro, oriente-o a pedir isso à clínica.
+4. **Mande os quatro cabeçalhos da loja escolhida, sempre juntos e da mesma linha:**
 
-`empresa_id` é o `codigo`; `empresa_cadastro` é o `empresaCadastro`. Em rede com
-matriz e filiais os dois divergem, e é justamente aí que o palpite erra.
+   | Cabeçalho | Vem de |
+   |---|---|
+   | `empresa_id` | `codigo` |
+   | `empresa_cadastro` | `empresaCadastro` |
+   | `empresa_financeiro` | `empresaFinanceiro` |
+   | `empresa_preco` | `empresaPreco` |
 
-Uma resposta `[]` significa que o usuário de integração não tem empresa vinculada
-— é a caixa "Empresas" do cadastro, no cliente, não erro de chamada. E confira de
-onde veio o `user_id`: em shell, `$UID` é variável reservada do próprio sistema, e
-usar ela por engano no lugar do id do token devolve `[]` sem erro nenhum.
+   Nunca misture valores de lojas diferentes, nunca repita o `empresa_id` nos
+   outros três, e nunca peça esses números ao usuário. Em rede com matriz e
+   filiais os quatro divergem — é para isso que existem — e um valor trocado traz
+   dado de outra loja, ou uma lista vazia, sem erro nenhum.
+5. **Guarde a escolha durante a conversa.** Escolhida a loja, continue nela nas
+   perguntas seguintes, dizendo sempre de qual loja é cada resposta. Se o usuário
+   mencionar outra, troque. Se ficar ambíguo, pergunte.
+
+**Um caso do CRM:** a listagem de clientes do CRM (`/crm/cliente/paginar/lista`)
+está declarada no gateway com o cabeçalho `empresa_financeira`, no feminino — o
+resto da API usa `empresa_financeiro`. Até isso ser corrigido, nessa chamada mande
+os dois, com o mesmo valor.
+
+Confira também de onde veio o `user_id`: em shell, `$UID` é variável reservada do
+próprio sistema, e usá-la por engano no lugar do id do token devolve `[]` sem erro.
 
 ### Diagnóstico
 
@@ -284,7 +432,7 @@ parte da investigação.
 | `401` sem corpo, numa chamada de negócio | Bearer ausente ou token vencido (24h). Refaça o passo 1. |
 | `403` + `{"message":"Missing Authentication Token"}` | Apesar do nome, **não é autenticação**: a URL não casou com nenhuma rota. Base path do grupo errado, caminho digitado errado, ou `/` na credencial. |
 | `403` + `{"message":"Forbidden"}` | Outra coisa: a sua API Key não tem acesso liberado àquele grupo. É liberação comercial, pedida por grupo — **siga "Quando a resposta for 403 Forbidden", logo abaixo, para falar com o usuário.** |
-| `500` + `CustomerNotFoundException: HEADER CUSTOMER IS A MANDATORY INFO` | Faltou `empresa_id` / `empresa_cadastro`. |
+| `500` + `CustomerNotFoundException: HEADER CUSTOMER IS A MANDATORY INFO` | Faltou algum dos **quatro** cabeçalhos de empresa — `empresa_id`, `empresa_cadastro`, `empresa_financeiro` ou `empresa_preco`. Confira os quatro, não só os dois primeiros. |
 | `500` + `MissingServletRequestParameterException: ... 'x' ... is not present` | Falta um parâmetro de query obrigatório — o nome está na própria mensagem. |
 | `429` | Quota da API Key estourada. |
 
@@ -296,8 +444,8 @@ rota errada (`Missing Authentication Token`) de API Key não autorizada
 
 ### Quando a resposta for 403 Forbidden
 
-O diagnóstico técnico está na tabela acima. Esta seção é sobre **como falar disso
-com o usuário** — que quase nunca é desenvolvedor, e para quem um erro técnico
+O diagnóstico técnico está na tabela acima. Esta seção aplica "Como falar com o
+usuário" a esse caso: é sobre **como falar disso com o usuário** — que quase nunca é desenvolvedor, e para quem um erro técnico
 soa como "estraguei alguma coisa".
 
 **1. Faça a checagem você mesmo.** Gere o token e chame um grupo que costuma
@@ -354,10 +502,10 @@ E-mail do cadastro no Developer Portal: <pergunte>
 Para que usamos: <finalidade, se o usuário contou>
 ```
 
-Cuidado com a empresa: **quem pede a liberação é o dono da API Key**, que pode
-ser um parceiro de integração, e não a clínica que aparece no `empresas-login`.
-Essa clínica é o cliente cujos dados estão sendo acessados. Não preencha a
-empresa com ela sem confirmar — pergunte.
+Cuidado com a empresa: **quem pede a liberação é o dono da API Key.** Se quem
+está falando é a clínica, a empresa é ela mesma. Se é um parceiro, é a empresa do
+parceiro — não a clínica que aparece no `empresas-login`, que é o cliente cujos
+dados estão sendo acessados. Na dúvida, pergunte.
 
 **5. O que não fazer:**
 
@@ -379,8 +527,9 @@ adicione e repita, em vez de adivinhar o contrato inteiro.
 
 Há dois tipos. **Grupo de domínio** reúne endpoints por assunto. **Grupo de
 parceiro** é um recorte curado dos mesmos endpoints sob um base path próprio.
-Existem outros grupos no portal, de uso interno ou de parceiros específicos, que
-não estão aqui: o acesso a eles passa pelo comercial.
+Existem outros grupos no portal, de uso interno ou de parceiros específicos. **Não
+os apresente ao usuário como caminho para um dado** — veja "Quando o dado não está
+aqui".
 
 **A regra que evita a maior parte dos 403:** se o contexto menciona um parceiro
 nomeado, use o base path **do parceiro**. `/item/paginar/lista` existe tanto em
@@ -448,7 +597,8 @@ Uma chamada só. A busca por nome já devolve `estoque` e `precoVenda` de cada i
 
 ```bash
 curl -s -H "x-api-key: $PETI9_OPENAPI_API_KEY" -H "Authorization: Bearer $TOKEN" \
-     -H "empresa_id: $EMP" -H "empresa_cadastro: $ECAD" \
+     -H "empresa_id: $EMP_ID" -H "empresa_cadastro: $EMP_CADASTRO" \
+     -H "empresa_financeiro: $EMP_FINANCEIRO" -H "empresa_preco: $EMP_PRECO" \
      "https://openapi.peti9.com/items/item/paginar/lista?pagina=0&limit=20&orderBy=nome&pesquisa=racao"
 ```
 
@@ -467,7 +617,8 @@ Direto, sem busca paginada:
 para os pets.
 
 **"Quais clientes fazem aniversário este mês?"**
-`GET /tutor/cliente/aniversariantes`.
+`GET /tutor/cliente/aniversariantes?dataInicial=AAAA-MM-DD&dataFinal=AAAA-MM-DD` — as
+duas datas são obrigatórias; para "este mês", do dia 1 ao último dia do mês.
 
 **"Me mostra o prontuário do atendimento 123."**
 `GET /services/atendimento/123/prontuarioatendimento`. Para os dados médicos
@@ -609,26 +760,78 @@ antes de tentar um caminho parecido.
 
 ## Quando o dado não está aqui
 
-Nem tudo da plataforma é exposto nas APIs públicas. Se o que o usuário pede não
-existe em nenhum grupo da tabela, **diga isso** — não force um endpoint parecido
-de outro grupo, que só devolve 404 e faz o usuário achar que errou a chamada. Há
-grupos internos e recortes de parceiro fora desta documentação, e o caminho para
-eles é comercial, não técnico. A resposta certa é: esse dado não está nas APIs
-públicas, fale com o comercial da Peti9.
+Nem tudo da plataforma está disponível pelas APIs. Se o que o usuário pede não
+existe em nenhum grupo da tabela, **diga isso com clareza** — e não monte uma
+resposta aproximada somando pedaços de outros endpoints: um número incompleto leva
+a uma decisão errada.
 
-## Escrita em produção
+Responda, em linguagem simples e nesta ordem:
 
-`GET` é livre: leia à vontade.
+1. **Hoje não há acesso a esse dado pelas APIs.** Sem rodeio, e sem dar a
+   entender que o usuário errou.
+2. **Onde o dado está agora**, se você souber — normalmente nos relatórios da
+   própria plataforma Peti9. É o caminho imediato.
+3. **Dá para pedir uma API nova.** A clínica ou o parceiro pode solicitar ao time
+   comercial da Peti9 — e-mail `comercial@peti9.com` ou WhatsApp
+   `(48) 98843-5447` — uma API para esse dado. **O pedido é avaliado pela Peti9.**
+4. **Ofereça escrever o pedido.** O que ajuda a avaliação é a justificativa: qual
+   dado, para que vai ser usado e com que frequência.
+5. **Ofereça o que dá para fazer hoje**, se existir algo próximo.
 
-`POST`, `PUT`, `PATCH` e `DELETE` batem em dado de cliente real e a API não desfaz.
-Criar pedido, cancelar ou reagendar atendimento, excluir assinatura, confirmar
-anexo de exame, finalizar venda — tudo irreversível por ela.
+**Não prometa.** Não diga que o dado "existe em outra API", que "há grupos que não
+estão aqui e podem ser liberados", nem dê prazo — você não sabe se aquele dado
+existe em alguma API nem se o pedido será aprovado. O certo é: pode-se pedir, e a
+Peti9 avalia.
 
-Antes de qualquer um deles: **mostre método, URL completa, headers de empresa e
-payload ao usuário e espere um "sim" explícito**. Um pedido genérico ("integra aí",
-"cadastra os tutores") não autoriza as escritas que ele implica. Confirme também
-**qual empresa** vai receber a escrita — `empresa_id` errado grava na unidade
-errada e ninguém percebe na hora.
+O modelo do pedido — preencha o que souber e marque o que falta:
+
+```
+Olá, time comercial da Peti9.
+
+Gostaria de solicitar uma API para acessar <o dado, em linguagem de negócio>.
+
+Empresa: <nome>
+Somos: <clínica cliente da Peti9 | parceiro de integração>
+Para que vamos usar: <finalidade>
+Com que frequência: <ex.: uma vez por dia>
+E-mail do cadastro no Developer Portal: <se já tiver>
+```
+
+## Consultar é livre; alterar exige confirmação
+
+**Consultas** podem ser feitas direto. Busque, mostre o resultado e converse com o
+usuário para refinar — outro período, outra loja, um filtro a mais.
+
+**Qualquer operação que mude dados exige um "sim" explícito do usuário antes de
+executar.** Vale para `POST`, `PUT`, `PATCH` e `DELETE` — e para qualquer chamada
+que **gere** algo, mesmo sendo uma leitura: gerar um link de acesso do App MeuPet
+é um `GET` e ainda assim cria um acesso novo. A regra é pelo efeito, não pelo tipo
+da chamada. `openapi.peti9.com` é produção, e a API não desfaz nada: criar pedido,
+cancelar ou reagendar atendimento, excluir assinatura, confirmar anexo de exame,
+finalizar venda.
+
+Como pedir a confirmação:
+
+1. **Diga em linguagem simples o que vai ser feito e em qual loja** — "Vou cancelar
+   o agendamento das 14h de hoje do Rex, tutor Carlos Souza, na loja Centro."
+2. **Quando der, confira antes com uma consulta.** Antes de cancelar ou excluir,
+   busque o registro e mostre o que ele é. Número de atendimento se troca fácil, e
+   excluir o errado não tem volta.
+3. **Mostre, logo abaixo e de forma compacta, o detalhe técnico** — método, caminho
+   e dados enviados — para quem quiser conferir.
+4. **Espere o "sim".** Uma resposta vaga não serve, e nem um pedido genérico:
+   "integra aí" ou "cadastra os tutores" não autoriza as alterações que ele implica.
+
+**Cada confirmação vale só para o que foi mostrado.** Uma alteração nova precisa de
+um "sim" novo, mesmo que parecida com a anterior. Nunca trate um "sim" antigo como
+autorização geral.
+
+**Num lote, uma confirmação cobre exatamente a lista mostrada** — nem um item a
+mais. Mostre todos os itens antes. Se um deles falhar no meio, pare, conte o que
+foi feito e o que não foi, e pergunte como seguir; não continue por conta própria.
+
+A loja de uma alteração é **sempre uma só**, e sempre confirmada pelo usuário — os
+quatro cabeçalhos errados gravam na loja errada, e ninguém percebe na hora.
 
 ## Quota
 

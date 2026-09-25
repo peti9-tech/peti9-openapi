@@ -1,7 +1,7 @@
 {
   "name": "peti9-openapi",
   "description": "Autentica e consome as Open APIs publicas da Peti9: gera o token JWT a partir de credenciais em variaveis de ambiente, monta os cabecalhos obrigatorios e escolhe o grupo de API correto.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "author": {
     "name": "Peti9"
   },

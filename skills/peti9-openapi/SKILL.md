@@ -44,9 +44,9 @@ senha são do **cliente**, criados por ele na plataforma dele.
 2. Confirme o e-mail e faça **Sign In**.
 3. Abra **My Dashboard** no menu do topo. O bloco **API Key** mostra a chave em
    texto puro — é o valor de `PETI9_OPENAPI_API_KEY`.
-4. A chave nasce **sem assinatura em nenhum grupo**. Para liberar, envie e-mail a
-   `comercial@peti9.com` com o nome da empresa, o e-mail do cadastro e a descrição
-   da integração. A liberação é por grupo, depois de NDA e contrato de parceria.
+4. A chave nasce **sem assinatura em nenhum grupo**. Para liberar, fale com o time
+   comercial — e-mail `comercial@peti9.com` ou WhatsApp `(48) 98843-5447` — com o
+   nome da empresa, o e-mail do cadastro e a descrição da integração. A liberação é por grupo, depois de NDA e contrato de parceria.
 
 Enquanto a liberação não sai, toda chamada devolve `403 {"message":"Forbidden"}`.
 
@@ -221,9 +221,10 @@ Pontos de atenção:
 
 O `x-api-key` é obrigatório em todos os grupos, **inclusive na rota de token**.
 Um `403 {"message":"Forbidden"}` quer dizer que a sua chave ainda não tem acesso
-liberado àquele grupo — é liberação comercial pendente, não erro de código. Logo
+liberado àquele grupo — é liberação comercial pendente, não erro de código. (Logo
 depois de uma liberação nova, a resposta ainda pode vir `Forbidden` por cerca de
-um minuto, até a mudança propagar.
+um minuto. Isso é para o **seu** diagnóstico: só diga ao usuário se ele contar que
+a liberação acabou de sair — veja "Quando a resposta for 403 Forbidden".)
 
 ## Passo 2 — chamar um endpoint
 
@@ -282,7 +283,7 @@ parte da investigação.
 | `401` + `[{"user":"Usuário ou senha inválido!"...}]` | Credencial errada mesmo. |
 | `401` sem corpo, numa chamada de negócio | Bearer ausente ou token vencido (24h). Refaça o passo 1. |
 | `403` + `{"message":"Missing Authentication Token"}` | Apesar do nome, **não é autenticação**: a URL não casou com nenhuma rota. Base path do grupo errado, caminho digitado errado, ou `/` na credencial. |
-| `403` + `{"message":"Forbidden"}` | Outra coisa: a sua API Key não tem acesso liberado àquele grupo. É liberação comercial, pedida por grupo. |
+| `403` + `{"message":"Forbidden"}` | Outra coisa: a sua API Key não tem acesso liberado àquele grupo. É liberação comercial, pedida por grupo — **siga "Quando a resposta for 403 Forbidden", logo abaixo, para falar com o usuário.** |
 | `500` + `CustomerNotFoundException: HEADER CUSTOMER IS A MANDATORY INFO` | Faltou `empresa_id` / `empresa_cadastro`. |
 | `500` + `MissingServletRequestParameterException: ... 'x' ... is not present` | Falta um parâmetro de query obrigatório — o nome está na própria mensagem. |
 | `429` | Quota da API Key estourada. |
@@ -292,6 +293,83 @@ trate 500 como instabilidade antes de ler o campo `tech` do corpo, que traz a
 exception. E os dois `403` **nunca** são usuário/senha: leia o corpo para separar
 rota errada (`Missing Authentication Token`) de API Key não autorizada
 (`Forbidden`).
+
+### Quando a resposta for 403 Forbidden
+
+O diagnóstico técnico está na tabela acima. Esta seção é sobre **como falar disso
+com o usuário** — que quase nunca é desenvolvedor, e para quem um erro técnico
+soa como "estraguei alguma coisa".
+
+**1. Faça a checagem você mesmo.** Gere o token e chame um grupo que costuma
+funcionar (o `empresas-login` do Companies serve). Se o token sai e esse outro
+grupo responde, a chave está viva e o bloqueio é só naquele grupo. **Nunca
+entregue um `curl` para o usuário rodar** — é trabalho seu, não dele. Se você não
+conseguir checar (credenciais ainda não configuradas, sem acesso ao terminal),
+não transfira a checagem: explique a causa mais provável e siga para o passo 3.
+
+Se o `Forbidden` vier **já na rota de token**, o caso é outro: a chave inteira
+ainda não foi liberada, não um grupo específico. Diga isso — nenhuma consulta vai
+funcionar até a liberação.
+
+**2. Traduza o grupo para o que o usuário reconhece.** Ele não sabe o que é
+"Digital Signature"; ele sabe o que é *documento assinado*.
+
+| Grupo | Diga ao usuário |
+|---|---|
+| Companies | os dados das suas unidades |
+| Tutors | o cadastro de tutores e pets |
+| Items | os produtos, serviços e estoque |
+| Orders | os pedidos |
+| Services | os atendimentos e prontuários |
+| Digital Signature | os documentos assinados digitalmente |
+| Crm | a agenda e os atendimentos do CRM |
+| Health Plan | o plano de saúde |
+| Laboratory Integration | os resultados de exames de laboratório |
+| App MeuPet | os links de acesso do app MeuPet |
+
+**3. Responda nesta ordem, em linguagem simples:**
+
+- **Primeiro, que não é erro dele.** Nada quebrou, a senha está certa — é uma
+  permissão que ainda não foi liberada.
+- **O que está bloqueado, e o que funciona.** No acesso parcial, diga as duas
+  coisas: *"Consigo ver seus produtos e estoque, mas a consulta de documentos
+  assinados ainda não foi liberada para a sua chave."*
+- **Quem libera e como falar com eles.** A liberação é feita pelo time comercial
+  da Peti9, pelos dois canais:
+  - **E-mail:** comercial@peti9.com
+  - **WhatsApp:** (48) 98843-5447
+- **Ofereça escrever a mensagem.** Monte o pedido pronto para ele copiar.
+
+**4. O modelo da mensagem.** Preencha só o que você sabe de fato, e deixe
+marcado o que precisa ser completado:
+
+```
+Olá, time comercial da Peti9.
+
+Uso a integração pelas Open APIs e preciso da liberação de acesso para
+<o que está bloqueado, em linguagem de negócio> (grupo <nome técnico>).
+
+Empresa: <nome da empresa de vocês — pergunte>
+E-mail do cadastro no Developer Portal: <pergunte>
+Para que usamos: <finalidade, se o usuário contou>
+```
+
+Cuidado com a empresa: **quem pede a liberação é o dono da API Key**, que pode
+ser um parceiro de integração, e não a clínica que aparece no `empresas-login`.
+Essa clínica é o cliente cujos dados estão sendo acessados. Não preencha a
+empresa com ela sem confirmar — pergunte.
+
+**5. O que não fazer:**
+
+- **Não use jargão.** Comece sempre em linguagem simples; detalhe técnico só se o
+  usuário pedir, ou se ele mesmo estiver escrevendo código. Colar uma mensagem de
+  erro não faz de ninguém desenvolvedor.
+- **Não tente contornar** o bloqueio buscando o mesmo dado por outro grupo.
+- **Não repita a chamada em laço** esperando que passe — `Forbidden` não é
+  instabilidade, e cada tentativa consome a quota.
+- **Não mencione a propagação de um minuto** a menos que o usuário diga que a
+  liberação acabou de sair. Para quem ainda nem pediu a liberação, a frase dá a
+  falsa esperança de que basta esperar, e ele adia o contato com o comercial.
 
 Os parâmetros obrigatórios variam por endpoint e os nomes são em português
 (`pagina`, `limit`, `orderBy`). Quando faltar um, a mensagem do `500` diz qual —
